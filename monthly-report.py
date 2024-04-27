@@ -123,23 +123,23 @@ def main():
 		context = ssl.create_default_context()
 		#
 		# Send off the message
-		with smtplib.SMTP(host=config['smtp']['server'], port=config['smtp']['port']) as s:
-			if config['smtp']['starttls']:
-				s.ehlo()
-				try:
-					s.starttls(context=context)
-				except:
-					traceback.print_exc()
-					print("ERROR: could not connect to SMTP server with STARTTLS")
-					sys.exit(2)
-			if config['smtp']['authentication']:
-				try:
-					s.login(user=config['smtp']['user'], password=config['smtp']['password'])
-				except:
-					traceback.print_exc()
-					print("ERROR: could not authenticate with SMTP server.")
-					sys.exit(3)
-			s.send_message(msg)
+		print("Sending email...")
+		if config['smtp']['starttls']:
+			with smtplib.SMTP_SSL(config['smtp']['server'], config['smtp']['port'], context=context) as s:
+				sendMessage(s, config, msg)
+		else:
+			with smtplib.SMTP(config['smtp']['server'], config['smtp']['port']) as s:
+				sendMessage(s, config, msg)
+
+def sendMessage(s, config, msg):
+	if config['smtp']['authentication']:
+		try:
+			s.login(user=config['smtp']['user'], password=config['smtp']['password'])
+		except:
+			traceback.print_exc()
+			print("ERROR: could not authenticate with SMTP server.")
+			sys.exit(3)
+	s.send_message(msg)
 
 if __name__ == "__main__":
 	main()
