@@ -100,7 +100,7 @@ def main():
 		#
 		# Assemble the email
 		msg = EmailMessage()
-		msg['Subject'] = "Firefly III: Monthly report"
+		msg['Subject'] = f"Firefly III: Monthly report in {currencyName}"
 		msg['From'] = "monthly-report <" + config['email']['from'] + ">"
 		msg['To'] = ( tuple(config['email']['to']) )
 		htmlBody = """
@@ -109,13 +109,13 @@ def main():
 				<style>table{{border-collapse: collapse; border-top: 1px solid black; border-bottom: 1px solid black;}} th {{border-bottom: 1px solid black; padding: 0.33em 1em 0.33em 1em;}} td{{padding: .1em;}} tr:nth-child(even) {{background: #EEE}} tr:nth-child(odd) {{background: #FFF}}</style>
 			</head>
 			<body>
-				<p>Monthly report for {monthName} {year}:</p>
+				<p>Monthly report for {monthName} {year} in {currency}:</p>
 				{categoriesTableBody}
 				<p>General information:</p>
 				{generalTableBody}
 			</body>
 		</html>
-		""".format( monthName=monthName, year=startDate.strftime("%Y"), categoriesTableBody=categoriesTableBody, generalTableBody=generalTableBody )
+		""".format( monthName=monthName, year=startDate.strftime("%Y"), currency=currencyName, categoriesTableBody=categoriesTableBody, generalTableBody=generalTableBody )
 		msg.set_content(bs4.BeautifulSoup(htmlBody, "html.parser").get_text()) # just html to text
 		msg.add_alternative(htmlBody, subtype='html')
 		#
