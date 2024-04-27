@@ -9,6 +9,7 @@ import re
 import bs4
 import ssl
 import smtplib
+import json
 
 from email.message import EmailMessage
 from email.headerregistry import Address
@@ -37,6 +38,7 @@ def main():
 		s.headers.update(HEADERS)
 		#
 		# Get all the categories
+		currencyName = config.get('currency', None)
 		url = config['firefly-url'] + '/api/v1/categories'
 		categories = s.get(url).json()
 		#
@@ -46,12 +48,20 @@ def main():
 			url = config['firefly-url'] + '/api/v1/categories/' + category['id'] + '?start=' + startDate.strftime('%Y-%m-%d') + '&end=' + endDate.strftime('%Y-%m-%d')
 			r = s.get(url).json()
 			categoryName   = r['data']['attributes']['name']
+			# Spent
+			categorySpent = 0
 			try:
-				categorySpent  = r['data']['attributes']['spent'][0]['sum']
+				for c in r['data']['attributes']['spent']:
+					if c['currency_code'] == currencyName:
+						categorySpent = c['sum']
 			except (KeyError, IndexError):
 				categorySpent = 0
+			# Earned
+			categoryEarned = 0
 			try:
-				categoryEarned = r['data']['attributes']['earned'][0]['sum']
+				for e in r['data']['attributes']['earned']:
+					if e['currency_code'] == currencyName:
+						categoryEarned = e['sum']
 			except (KeyError, IndexError):
 				categoryEarned = 0
 			categoryTotal  = float(categoryEarned) + float(categorySpent)
@@ -60,13 +70,7 @@ def main():
 		# Get general information
 		monthSummary = s.get(config['firefly-url'] + '/api/v1/summary/basic' + '?start=' + startDate.strftime('%Y-%m-%d') + '&end=' + endDate.strftime('%Y-%m-%d')).json()
 		yearToDateSummary = s.get(config['firefly-url'] + '/api/v1/summary/basic' + '?start=' + startDate.strftime('%Y') + '-01-01' + '&end=' + endDate.strftime('%Y-%m-%d')).json()
-		currency = config.get('currency', None)
-		if currency:
-			currencyName = currency
-		else:
-			for key in monthSummary:
-				if re.match(r'spent-in-.*', key):
-					currencyName = key.replace("spent-in-", "")
+
 		spentThisMonth     = float(monthSummary['spent-in-'+currencyName]['monetary_value'])
 		earnedThisMonth    = float(monthSummary['earned-in-'+currencyName]['monetary_value'])
 		netChangeThisMonth = float(monthSummary['balance-in-'+currencyName]['monetary_value'])
