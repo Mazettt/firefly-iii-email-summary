@@ -123,7 +123,6 @@ def main():
 		context = ssl.create_default_context()
 		#
 		# Send off the message
-		print("Sending email...")
 		if config['smtp']['starttls']:
 			with smtplib.SMTP_SSL(config['smtp']['server'], config['smtp']['port'], context=context) as s:
 				sendMessage(s, config, msg)
